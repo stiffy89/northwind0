@@ -5,22 +5,20 @@
     "repository": "<Add your repository here>",
     "license": "UNLICENSED",
     "private": true,
+    "engines": {
+        "node": "^16"
+    },
     "dependencies": {
-        "@sap-cloud-sdk/http-client": "^3.4.0",
-        "@sap/cds": "^7",
-        "@sap/cds-hana": "^2",
-        "@sap/xssec": "^3",
+        "@sap-cloud-sdk/http-client": "^3.2.0",
+        "@sap/cds": "^6",
         "express": "^4",
+        "@sap/xssec": "^3",
         "passport": "^0"
     },
     "devDependencies": {
-        "@cap-js/sqlite": "^1",
-        "@sap/cds-dk": "^7",
-        "@sap/ux-specification": "^1.108.11",
+        "@sap/ux-specification": "^1.108.9",
+        "sqlite3": "^5",
         "rimraf": "^3.0.2"
-    },
-    "engines": {
-        "node": "^16"
     },
     "scripts": {
         "start": "cds-serve",

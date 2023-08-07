@@ -1,58 +1,134 @@
-_schema-version: '3.1'
+_schema-version: "3.1"
 ID: northwind0
+description: A simple CAP project.
 version: 1.0.0
-description: "A simple CAP project."
+modules:
+- name: northwind0-destinations
+  type: com.sap.application.content
+  requires:
+  - name: northwind0-uaa
+    parameters:
+      service-key:
+        name: northwind0-uaa-key
+  - name: northwind0-html5-repo-host
+    parameters:
+      service-key:
+        name: northwind0-html5-repo-host-key
+  - name: srv-api
+  - name: northwind0-destination
+    parameters:
+      content-target: true
+  parameters:
+    content:
+      instance:
+        destinations:
+        - Authentication: OAuth2UserTokenExchange
+          Name: northwind0-app-srv
+          TokenServiceInstanceName: northwind0-uaa
+          TokenServiceKeyName: northwind0-uaa-key
+          URL: ~{srv-api/srv-url}
+          sap.cloud.service: northwind0.service
+        - Name: northwind0-html5-repo-host
+          ServiceInstanceName: northwind0-html5-repo-host
+          ServiceKeyName: northwind0-html5-repo-host-key
+          sap.cloud.service: northwind0.service
+        - Authentication: OAuth2UserTokenExchange
+          Name: northwind0-uaa
+          ServiceInstanceName: northwind0-uaa
+          ServiceKeyName: northwind0-uaa-key
+          sap.cloud.service: northwind0.service
+        existing_destinations_policy: update
+  build-parameters:
+    no-source: true
+- name: northwind0-srv
+  type: nodejs
+  path: gen/srv
+  requires:
+  - name: northwind0-uaa
+  - name: northwind0-db
+  - name: northwind0-destination
+  provides:
+  - name: srv-api
+    properties:
+      srv-url: ${default-url}
+  parameters:
+    buildpack: nodejs_buildpack
+  build-parameters:
+    builder: npm
+- name: northwind0-db-deployer
+  type: hdb
+  path: gen/db
+  requires:
+  - name: northwind0-db
+  parameters:
+    buildpack: nodejs_buildpack
+- name: northwind0-app-content
+  type: com.sap.application.content
+  path: .
+  requires:
+  - name: northwind0-html5-repo-host
+    parameters:
+      content-target: true
+  build-parameters:
+    build-result: resources
+    requires:
+    - artifacts:
+      - nsnorthwind0.zip
+      name: nsnorthwind0
+      target-path: resources/
+- name: nsnorthwind0
+  type: html5
+  path: app/northwind0
+  build-parameters:
+    build-result: dist
+    builder: custom
+    commands:
+    - npm install
+    - npm run build:cf
+    supported-platforms: []
+resources:
+- name: northwind0-destination
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      HTML5Runtime_enabled: true
+      init_data:
+        instance:
+          destinations:
+          - Authentication: NoAuthentication
+            Name: ui5
+            ProxyType: Internet
+            Type: HTTP
+            URL: https://ui5.sap.com
+          existing_destinations_policy: update
+    service: destination
+    service-plan: lite
+- name: northwind0-html5-repo-host
+  type: org.cloudfoundry.managed-service
+  parameters:
+    service: html5-apps-repo
+    service-plan: app-host
+- name: northwind0-uaa
+  type: org.cloudfoundry.managed-service
+  parameters:
+    config:
+      tenant-mode: dedicated
+      xsappname: northwind0-${org}-${space}
+    path: ./xs-security.json
+    service: xsuaa
+    service-plan: application
+- name: northwind0-db
+  type: com.sap.xs.hdi-container
+  parameters:
+    service: hana
+    service-plan: hdi-shared
 parameters:
+  deploy_mode: html5-repo
   enable-parallel-deployments: true
 build-parameters:
   before-all:
-   - builder: custom
-     commands:
-      - npm install --production
-      - npx -p @sap/cds-dk cds build --production
-      - npx rimraf gen/db/src/gen/data
-modules:
-  - name: northwind0-srv
-    type: nodejs
-    path: gen/srv
-    parameters:
-      buildpack: nodejs_buildpack
-    build-parameters:
-      builder: npm
-    provides:
-      - name: srv-api # required by consumers of CAP services (e.g. approuter)
-        properties:
-          srv-url: ${default-url}
-    requires:
-      - name: northwind0-uaa
-      - name: northwind0-db
-      - name: northwind0-destination
-
-  - name: northwind0-db-deployer
-    type: hdb
-    path: gen/db
-    parameters:
-      buildpack: nodejs_buildpack
-    requires:
-      - name: northwind0-db
-
-resources:
-  - name: northwind0-uaa
-    type: org.cloudfoundry.managed-service
-    parameters:
-      service: xsuaa
-      service-plan: application
-      path: ./xs-security.json
-      config:
-        xsappname: northwind0-${org}-${space}
-        tenant-mode: dedicated
-  - name: northwind0-db
-    type: com.sap.xs.hdi-container
-    parameters:
-      service: hana
-      service-plan: hdi-shared
-  - name: northwind0-destination
-    type: org.cloudfoundry.managed-service
-    parameters:
-      service: destination
-      service-plan: lite
+  - builder: custom
+    commands:
+    - npm install --production
+    - npx -p @sap/cds-dk cds build --production
+    - npx rimraf gen/db/src/gen/data

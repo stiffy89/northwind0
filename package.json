@@ -1,43 +1,52 @@
 {
-  "name": "northwind0",
-  "version": "1.0.0",
-  "description": "A simple CAP project.",
-  "repository": "<Add your repository here>",
-  "license": "UNLICENSED",
-  "private": true,
-  "dependencies": {
-    "@sap-cloud-sdk/http-client": "^3.4.0",
-    "@sap/cds": "^7",
-    "express": "^4",
-    "@sap/cds-hana": "^2",
-    "@sap/xssec": "^3",
-    "passport": "^0"
-  },
-  "devDependencies": {
-    "@cap-js/sqlite": "^1",
-    "@sap/cds-dk": "^7"
-  },
-  "engines": {
-    "node": "^16"
-  },
-  "scripts": {
-    "start": "cds-serve"
-  },
-  "cds": {
-    "requires": {
-      "Northwind": {
-        "kind": "odata",
-        "model": "srv/external/Northwind",
-        "[backend]": {
-          "credentials": {
-            "url": "https://services.odata.org/Experimental/OData/OData.svc"
-          }
+    "name": "northwind0",
+    "version": "1.0.0",
+    "description": "A simple CAP project.",
+    "repository": "<Add your repository here>",
+    "license": "UNLICENSED",
+    "private": true,
+    "dependencies": {
+        "@sap-cloud-sdk/http-client": "^3.4.0",
+        "@sap/cds": "^7",
+        "@sap/cds-hana": "^2",
+        "@sap/xssec": "^3",
+        "express": "^4",
+        "passport": "^0"
+    },
+    "devDependencies": {
+        "@cap-js/sqlite": "^1",
+        "@sap/cds-dk": "^7",
+        "@sap/ux-specification": "^1.108.11",
+        "rimraf": "^3.0.2"
+    },
+    "engines": {
+        "node": "^16"
+    },
+    "scripts": {
+        "start": "cds-serve",
+        "watch-northwind0": "cds watch --open northwind0/webapp/index.html?sap-ui-xx-viewCache=false",
+        "undeploy": "cf undeploy northwind0 --delete-services --delete-service-keys --delete-service-brokers",
+        "build": "rimraf resources mta_archives && mbt build --mtar archive",
+        "deploy": "cf deploy mta_archives/archive.mtar --retries 1"
+    },
+    "cds": {
+        "requires": {
+            "Northwind": {
+                "kind": "odata",
+                "model": "srv/external/Northwind",
+                "[backend]": {
+                    "credentials": {
+                        "url": "https://services.odata.org/Experimental/OData/OData.svc"
+                    }
+                }
+            },
+            "[production]": {
+                "db": "hana",
+                "auth": "xsuaa"
+            }
         }
-      },
-      "[production]": {
-        "db": "hana",
-        "auth": "xsuaa"
-      }
-    }
-  }
+    },
+    "sapux": [
+        "app/northwind0"
+    ]
 }
